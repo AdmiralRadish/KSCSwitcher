@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UniLinq;
 using UnityEngine;
 
@@ -37,6 +38,20 @@ namespace regexKSP
         public string lastSite = "";
         private static LastKSC instance;
 
+        // Preserve all ConfigNode values so other LMP players' data is retained on save.
+        private readonly Dictionary<string, string> _allValues = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Returns the ConfigNode key for the current player's last launch site.
+        /// Single-player: "LastLaunchSite"  |  LMP: "PlayerName_LastLaunchSite"
+        /// </summary>
+        private static string GetSiteKey()
+        {
+            if (!KSCLunaHelper.IsLunaEnabled) return "LastLaunchSite";
+            string player = KSCLunaHelper.GetCurrentPlayerName();
+            return player == "SinglePlayer" ? "LastLaunchSite" : player + "_LastLaunchSite";
+        }
+
         public static LastKSC fetch
         {
             get
@@ -52,19 +67,28 @@ namespace regexKSP
 
         public override void OnLoad(ConfigNode config)
         {
-            if (config.HasValue("LastLaunchSite"))
-            {
-                lastSite = config.GetValue("LastLaunchSite");
-            }
+            // Preserve all values so other LMP players' data survives the save cycle.
+            _allValues.Clear();
+            foreach (ConfigNode.Value v in config.values)
+                _allValues[v.name] = v.value;
+
+            string key = GetSiteKey();
+            if (config.HasValue(key))
+                lastSite = config.GetValue(key);
+            else if (key != "LastLaunchSite" && config.HasValue("LastLaunchSite"))
+                lastSite = config.GetValue("LastLaunchSite"); // first LMP load — fall back to legacy key
+
             if (!string.IsNullOrEmpty(lastSite))
-            {
                 KSCLoader.instance.Sites.lastSite = lastSite;
-            }
         }
 
         public override void OnSave(ConfigNode config)
         {
-            config.AddValue("LastLaunchSite", lastSite);
+            string key = GetSiteKey();
+            _allValues[key] = lastSite;
+
+            foreach (var kvp in _allValues)
+                config.AddValue(kvp.Key, kvp.Value);
         }
 
         public static void CreateSettings(Game game)
