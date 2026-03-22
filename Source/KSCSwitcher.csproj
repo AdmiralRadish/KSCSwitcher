@@ -93,6 +93,8 @@
     <Compile Include="CameraFixer.cs" />
     <Compile Include="GrassSeasoner.cs" />
     <Compile Include="KSCLoader.cs" />
+    <Compile Include="KSCLog.cs" />
+    <Compile Include="KSCPrefsIO.cs" />
     <Compile Include="KSCSiteManager.cs" />
     <Compile Include="KSCSwitcher.cs" />
     <Compile Include="LastKSC.cs" />

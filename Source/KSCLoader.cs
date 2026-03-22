@@ -12,6 +12,7 @@ namespace regexKSP
     {
         void Start()
         {
+            KSCLog.Verbose("ScenarioSpawn.Start: ensuring KSCLoader singleton.");
             KSCLoader.instance ??= new KSCLoader();
             enabled = false;
         }
@@ -24,58 +25,46 @@ namespace regexKSP
 
         private void OnGameStateCreated(Game game)
         {
+            KSCLog.Verbose($"KSCLoader.OnGameStateCreated: scene={HighLogic.LoadedScene}");
             LastKSC.CreateSettings(game);
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
-                ProtoScenarioModule m = HighLogic.CurrentGame.scenarios.FirstOrDefault(m => m.moduleName == "LastKSC");
+                // Load last site from XML prefs (per-player)
+                string savedSite = KSCPrefsIO.LoadLastSite();
+                KSCLog.Verbose($"KSCLoader: XML prefs returned lastSite='{savedSite}'");
 
-                if (m == null) return;
-
-                LastKSC l = (LastKSC)m.Load(ScenarioRunner.Instance);
-                bool noSite;
-                if (!string.IsNullOrEmpty(l.lastSite))
+                if (!string.IsNullOrEmpty(savedSite))
                 {
-                    // found a site, load it
-                    ConfigNode site = Sites.GetSiteByName(l.lastSite);
-                    if (site == null)
+                    ConfigNode site = Sites.GetSiteByName(savedSite);
+                    if (site != null)
                     {
-                        l.lastSite = Sites.defaultSite;
-                        noSite = true;
-                    }
-                    else
-                    {
+                        Sites.lastSite = savedSite;
                         KSCSwitcher.SetSiteAndResetCamera(site);
-                        Debug.Log("[KSCSwitcher] set the launch site to the last site, " + l.lastSite);
+                        KSCLog.Log($"KSCLoader: restored last site '{savedSite}' from XML prefs.");
                         return;
                     }
+                    KSCLog.Warn($"KSCLoader: saved site '{savedSite}' not found in config, falling back to default.");
                 }
-                else
+
+                // Fall back to default site
+                if (!string.IsNullOrEmpty(Sites.defaultSite))
                 {
-                    l.lastSite = Sites.defaultSite;
-                    noSite = true;
-                }
-                if (noSite)
-                {
-                    if (!string.IsNullOrEmpty(Sites.defaultSite))
+                    ConfigNode site = Sites.GetSiteByName(Sites.defaultSite);
+                    if (site == null)
                     {
-                        ConfigNode site = Sites.GetSiteByName(Sites.defaultSite);
-                        if (site == null)
-                        {
-                            Debug.LogError("[KSCSwitcher] found a default site name but could not retrieve the site config: " + Sites.defaultSite);
-                            return;
-                        }
-                        else
-                        {
-                            KSCSwitcher.SetSiteAndResetCamera(site);
-                            Debug.Log("[KSCSwitcher] set the initial launch site to the default" + Sites.defaultSite);
-                        }
+                        KSCLog.Error($"KSCLoader: default site '{Sites.defaultSite}' not found in config!");
+                        return;
                     }
+                    Sites.lastSite = Sites.defaultSite;
+                    KSCSwitcher.SetSiteAndResetCamera(site);
+                    KSCLog.Log($"KSCLoader: set initial launch site to default '{Sites.defaultSite}'.");
                 }
             }
         }
 
         public KSCLoader()
         {
+            KSCLog.Log("KSCLoader: constructor, registering onGameStateCreated.");
             GameEvents.onGameStateCreated.Add(OnGameStateCreated);
         }
     }

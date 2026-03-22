@@ -58,17 +58,22 @@ namespace regexKSP
 
         public void Start()
         {
-            if (FoundKopernicus) return;
+            if (FoundKopernicus)
+            {
+                KSCLog.Verbose("CameraFixer.Start: Kopernicus detected, skipping.");
+                return;
+            }
             if (HighLogic.LoadedScene.Equals(GameScenes.MAINMENU)) ready = true;
             if (!ready) return;
 
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
+                KSCLog.Verbose("CameraFixer.Start: SpaceCenter scene, looking for KSC PQSCity.");
                 var ksc = Resources.FindObjectsOfTypeAll<PQSCity>().FirstOrDefault(city => city.name == "KSC");
 
                 if (ksc == null)
                 {
-                    Debug.Log("[KSCSwitcher] could not find KSC to fix the camera.");
+                    KSCLog.Warn("CameraFixer: could not find KSC to fix the camera.");
                     return;
                 }
                 foreach (var cam in Resources.FindObjectsOfTypeAll<SpaceCenterCamera2>())
@@ -78,7 +83,7 @@ namespace regexKSP
                         CelestialBody kerbin = FlightGlobals.Bodies.Find(body => body.name == ksc.sphere.name);
                         if (kerbin == null)
                         {
-                            Debug.Log("[KSCSwitcher] could not find find the CelestialBody specified as KSC's sphere.");
+                            KSCLog.Warn("CameraFixer: could not find the CelestialBody specified as KSC's sphere.");
                             return;
                         }
                         double nomHeight = kerbin.pqsController.GetSurfaceHeight(ksc.repositionRadial.normalized) - kerbin.Radius;
@@ -87,13 +92,15 @@ namespace regexKSP
                             nomHeight += ksc.repositionRadiusOffset;
                         }
                         cam.altitudeInitial = 0f - (float)nomHeight;
+                        KSCLog.Verbose($"CameraFixer: repositionToSphere, nomHeight={nomHeight}, altitudeInitial={cam.altitudeInitial}");
                     }
                     else
                     {
                         cam.altitudeInitial = 0f - (float)ksc.repositionRadiusOffset;
+                        KSCLog.Verbose($"CameraFixer: radiusOffset only, altitudeInitial={cam.altitudeInitial}");
                     }
                     cam.ResetCamera();
-                    Debug.Log("[KSCSwitcher] fixed the Space Center camera.");
+                    KSCLog.Log("CameraFixer: fixed the Space Center camera.");
                 }
             }
         }

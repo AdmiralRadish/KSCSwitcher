@@ -30,25 +30,14 @@ using UnityEngine;
 
 namespace regexKSP
 {
-    // Taniwha graciously offered the use of this code/method for saving our settings per save game.
-    // I've changed where appropriate and reformatted because of 1TBS.
+    /// <summary>
+    /// Migration shim: reads old scenario data on load and migrates it to the XML prefs file.
+    /// Kept as a ScenarioModule so existing saves don't throw errors on load.
+    /// All new persistence goes through KSCPrefsIO instead.
+    /// </summary>
     public class LastKSC : ScenarioModule
     {
         public string lastSite = "";
-        private static LastKSC instance;
-
-        public static LastKSC fetch
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    Game g = HighLogic.CurrentGame;
-                    instance = g.scenarios.Select(s => s.moduleRef).OfType<LastKSC>().SingleOrDefault();
-                }
-                return instance;
-            }
-        }
 
         public override void OnLoad(ConfigNode config)
         {
@@ -56,23 +45,35 @@ namespace regexKSP
             {
                 lastSite = config.GetValue("LastLaunchSite");
             }
+
+            // Migrate old scenario data to the XML file if no XML pref exists yet
             if (!string.IsNullOrEmpty(lastSite))
             {
-                KSCLoader.instance.Sites.lastSite = lastSite;
+                string xmlSite = KSCPrefsIO.LoadLastSite();
+                if (string.IsNullOrEmpty(xmlSite))
+                {
+                    KSCLog.Log($"LastKSC.OnLoad: migrating '{lastSite}' from scenario to XML prefs.");
+                    KSCPrefsIO.SaveLastSite(lastSite);
+                }
             }
         }
 
         public override void OnSave(ConfigNode config)
         {
-            config.AddValue("LastLaunchSite", lastSite);
+            // No-op: persistence is handled by KSCPrefsIO now.
+            // We intentionally don't write back to the scenario to avoid LMP conflicts.
         }
 
+        /// <summary>
+        /// Ensures the scenario module exists in the game so old saves can load without errors.
+        /// </summary>
         public static void CreateSettings(Game game)
         {
             if (!game.scenarios.Any(p => p.moduleName == typeof(LastKSC).Name))
             {
                 ProtoScenarioModule proto = game.AddProtoScenarioModule(typeof(LastKSC), GameScenes.TRACKSTATION);
                 proto.Load(ScenarioRunner.Instance);
+                KSCLog.Verbose("LastKSC.CreateSettings: registered scenario module for migration.");
             }
         }
     }

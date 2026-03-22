@@ -76,10 +76,10 @@ namespace regexKSP
             }
             else
             {
-                Debug.Log("[KSCSwitcher] No LaunchSites node found!");
+                KSCLog.Warn("KSCSiteManager: No LaunchSites node found!");
             }
 
-            Debug.Log("[KSCSwitcher] loaded " + Sites.Count + " launch sites.");
+            KSCLog.Log($"KSCSiteManager: loaded {Sites.Count} launch sites, default='{defaultSite}'.");
         }
 
         public ConfigNode GetSiteByName(string name)

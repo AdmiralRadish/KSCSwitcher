@@ -39,7 +39,7 @@ namespace regexKSP
                 {
                     if (pqsCity.TryGetValue("grassColor", ref col))
                     {
-                        Debug.Log($"[KSCSwitcher] found KSC grass color {col} from config");
+                        KSCLog.Verbose($"GrassSeasoner: found KSC grass color {col} from config");
                         return true;
                     }
                 }
@@ -81,7 +81,7 @@ namespace regexKSP
                 y = Mathf.Clamp(y, 0, texture.Height);
 
                 col = texture.GetPixelColor(x, y);
-                Debug.Log($"[KSCSwitcher] parsed {col} from color map at {x}, {y}");
+                KSCLog.Verbose($"GrassSeasoner: parsed {col} from color map at {x}, {y}");
                 col *= colorMult;
                 col.a = 0;    // The shader doesn't actually use alpha channel for transparency but something else entirely (specular?)
                 return true;
@@ -118,7 +118,7 @@ namespace regexKSP
     {
         public void Start()
         {
-            Debug.Log($"[KSCSwitcher] editor grass fixer start");
+            KSCLog.Verbose("EditorGrassFixer.Start: applying grass color.");
             GameObject scenery = GameObject.Find("VABscenery") ?? GameObject.Find("SPHscenery");
             Material material = scenery?.GetChild("ksc_terrain")?.GetComponent<Renderer>()?.sharedMaterial;
 
@@ -130,7 +130,7 @@ namespace regexKSP
                 return;
 
             material.color = c;
-            Debug.Log($"[KSCSwitcher] editor grass fixer end");
+            KSCLog.Verbose($"EditorGrassFixer: applied grass color {c}.");
         }
     }
 }

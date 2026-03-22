@@ -84,24 +84,24 @@ namespace regexKSP
             if (!string.IsNullOrEmpty(KSCLoader.instance.Sites.lastSite))
             {
                 activeSite = KSCLoader.instance.Sites.lastSite;
-                print("KSCSwitcher set the active site to the last site of " + activeSite);
+                KSCLog.Verbose($"KSCSwitcher.Start: active site from lastSite='{activeSite}'");
             }
             else if (!string.IsNullOrEmpty(KSCLoader.instance.Sites.defaultSite))
             {
                 activeSite = KSCLoader.instance.Sites.defaultSite;
-                print("KSCSwitcher set the active site to the default site of " + activeSite);
+                KSCLog.Verbose($"KSCSwitcher.Start: active site from default='{activeSite}'");
             }
             else
             {
-                print("KSCSwitcher could not set the active site");
+                KSCLog.Warn("KSCSwitcher.Start: could not determine active site.");
             }
             LoadTextures();
-            print("KSCSwitcher initialized");
+            KSCLog.Log("KSCSwitcher initialized.");
         }
 
         public void OnDestroy()
         {
-            print("KSCSwitcher destroyed");
+            KSCLog.Verbose("KSCSwitcher.OnDestroy");
         }
 
         public void OnGUI()
@@ -277,7 +277,7 @@ namespace regexKSP
             {
                 FloatingOrigin.SetOffset(PSystemSetup.Instance.SCTransform.position);
                 LastFloatingOriginKSC = KSC.GetValue("name");
-                Debug.Log("[KSCSwitcher] set floating point origin offset");
+                KSCLog.Verbose($"SetSiteAndResetCamera: set floating origin offset for '{LastFloatingOriginKSC}'");
             }
 
             return b;
@@ -303,7 +303,7 @@ namespace regexKSP
                 {
                     if (!ksc.name.Equals(pqsCity.GetValue("KEYname")))
                     {
-                        Debug.Log("[KSCSwitcher] Could not retrieve KSC to move, reporting failure and moving on.");
+                        KSCLog.Warn($"SetSite: KEYname mismatch, expected '{pqsCity.GetValue("KEYname")}' but found '{ksc.name}'.");
                         return false;
                     }
                 }
@@ -395,7 +395,7 @@ namespace regexKSP
             }
             else
             {
-                Debug.LogError("[KSCSwitcher] Could not retrieve KSC to move, reporting failure and moving on.");
+                KSCLog.Error("SetSite: could not find KSC PQSCity, aborting.");
                 return false;
             }
 
@@ -453,8 +453,10 @@ namespace regexKSP
                 SpaceCenter.Instance.Start();  // 1.0.5
                 if (KSC.HasValue("name"))
                 {
-                    KSCLoader.instance.Sites.lastSite = LastKSC.fetch.lastSite = KSC.GetValue("name");
-                    print("KSCSwitcher changed MapDecal_Tangent");
+                    string siteName = KSC.GetValue("name");
+                    KSCLoader.instance.Sites.lastSite = siteName;
+                    KSCPrefsIO.SaveLastSite(siteName);
+                    KSCLog.Log($"SetSite: switched to '{siteName}', saved to XML.");
                 }
             }
 
@@ -476,7 +478,7 @@ namespace regexKSP
 
         private void FocusOnSite(Vector2d loc)
         {
-            Debug.Log("[KSCSwitcher] Focusing on site");
+            KSCLog.Verbose($"KSCSwitcher.FocusOnSite: lat={loc.x}, lon={loc.y}");
             PlanetariumCamera camera = PlanetariumCamera.fetch;
             CelestialBody Kerbin = KSCBody;
             Vector3d point = ScaledSpace.LocalToScaledSpace(Kerbin.GetWorldSurfacePosition(loc.x, loc.y, 0));
@@ -519,7 +521,7 @@ namespace regexKSP
             }
             catch (Exception ex)
             {
-                Debug.LogError("[KSCSwitcher] Could not load button textures for KSCSwitcher, reverting to old button style: " + ex);
+                KSCLog.Error($"LoadTextures: Could not load button textures, reverting to old button style: {ex}");
                 oldButton = true;
             }
 

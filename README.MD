@@ -1,2 +1,2 @@
 ### KSCSwitcher
-Switches your KSC
+Switches your KSC v2.3.0.0
