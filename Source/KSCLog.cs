@@ -14,7 +14,7 @@ namespace regexKSP
         /// Set to true to enable detailed trace logging.
         /// When false, only Log/Warn/Error calls produce output.
         /// </summary>
-        public static bool VerboseLogging = true;
+        public static bool VerboseLogging = false;
 
         public static void Log(string message)
         {
