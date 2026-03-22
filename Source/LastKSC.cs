@@ -72,7 +72,7 @@ namespace regexKSP
             if (!game.scenarios.Any(p => p.moduleName == typeof(LastKSC).Name))
             {
                 ProtoScenarioModule proto = game.AddProtoScenarioModule(typeof(LastKSC), GameScenes.TRACKSTATION);
-                proto.Load(ScenarioRunner.Instance);
+                proto.Load(ScenarioRunner.Instance); 
             }
         }
     }
