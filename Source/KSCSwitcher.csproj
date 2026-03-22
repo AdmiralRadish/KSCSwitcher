@@ -43,7 +43,7 @@
   <PropertyGroup>
     <KSPManagedDir>$(KSPDir)\KSP_x64_Data\Managed</KSPManagedDir>
   </PropertyGroup>
-  <Target Name="ValidateKSPDir" BeforeTargets="ResolveAssemblyReferences">
+  <Target Name="ValidateKSPDir" BeforeTargets="ResolveAssemblyReferences" Condition="'$(ReferencePath)' == ''">
     <Error Condition="'$(KSPDir)' == ''" Text="KSPDir is not set. Copy KSPPath.props.template to KSPPath.props and set your KSP install path." />
     <Error Condition="!Exists('$(KSPManagedDir)')" Text="KSP managed directory not found at '$(KSPManagedDir)'. Verify your KSPDir path." />
   </Target>
