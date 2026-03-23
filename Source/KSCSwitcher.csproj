@@ -38,54 +38,50 @@
     <DebugSymbols>true</DebugSymbols>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
-  <!-- KSP install path — set KSPDir in your .csproj.user file -->
-  <Import Project="$(MSBuildProjectName).csproj.user" Condition="Exists('$(MSBuildProjectName).csproj.user')" />
-  <PropertyGroup>
-    <KSPManagedDir>$(KSPDir)\KSP_x64_Data\Managed</KSPManagedDir>
-  </PropertyGroup>
+  <!-- Set KSPDir in your .csproj.user file to your KSP install folder -->
   <Target Name="ValidateKSPDir" BeforeTargets="ResolveAssemblyReferences">
     <Error Condition="'$(KSPDir)' == ''" Text="KSPDir is not set. Set KSPDir in your .csproj.user file to your KSP install path." />
-    <Error Condition="!Exists('$(KSPManagedDir)')" Text="KSP managed directory not found at '$(KSPManagedDir)'. Verify your KSPDir path." />
+    <Error Condition="!Exists('$(KSPDir)\KSP_x64_Data\Managed')" Text="KSP managed directory not found at '$(KSPDir)\KSP_x64_Data\Managed'. Verify your KSPDir path." />
   </Target>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(KSPManagedDir)\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>$(KSPManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>$(KSPManagedDir)\UnityEngine.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(KSPManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>$(KSPManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>$(KSPManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>$(KSPManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System">
-      <HintPath>$(KSPManagedDir)\System.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\System.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core">
-      <HintPath>$(KSPManagedDir)\System.Core.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\System.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Xml">
-      <HintPath>$(KSPManagedDir)\System.Xml.dll</HintPath>
+      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\System.Xml.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
