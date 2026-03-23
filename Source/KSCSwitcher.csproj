@@ -38,13 +38,13 @@
     <DebugSymbols>true</DebugSymbols>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
-  <!-- KSP install path — copy KSPPath.props.template to KSPPath.props and set your path -->
-  <Import Project="KSPPath.props" Condition="Exists('KSPPath.props')" />
+  <!-- KSP install path — set KSPDir in your .csproj.user file -->
+  <Import Project="$(MSBuildProjectName).csproj.user" Condition="Exists('$(MSBuildProjectName).csproj.user')" />
   <PropertyGroup>
     <KSPManagedDir>$(KSPDir)\KSP_x64_Data\Managed</KSPManagedDir>
   </PropertyGroup>
   <Target Name="ValidateKSPDir" BeforeTargets="ResolveAssemblyReferences">
-    <Error Condition="'$(KSPDir)' == ''" Text="KSPDir is not set. Copy KSPPath.props.template to KSPPath.props and set your KSP install path." />
+    <Error Condition="'$(KSPDir)' == ''" Text="KSPDir is not set. Set KSPDir in your .csproj.user file to your KSP install path." />
     <Error Condition="!Exists('$(KSPManagedDir)')" Text="KSP managed directory not found at '$(KSPManagedDir)'. Verify your KSPDir path." />
   </Target>
   <ItemGroup>

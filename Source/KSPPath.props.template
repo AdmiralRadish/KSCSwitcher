@@ -1,6 +1,0 @@
-<Project>
-  <PropertyGroup>
-    <!-- Path to your KSP install folder (the one containing KSP_x64.exe) -->
-    <KSPDir>C:\Program Files (x86)\Steam\steamapps\common\Kerbal Space Program</KSPDir>
-  </PropertyGroup>
-</Project>
