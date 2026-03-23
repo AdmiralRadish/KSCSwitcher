@@ -3,13 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# KSP mod — reference DLLs come from user's KSP install (set KSPDir in KSPPath.props)
-Source/KSP_x64_Data/
-Source/KSPPath.props
-
-# Runtime user prefs (per-install, not versioned)
-GameData/KSCSwitcher/PluginData/
-
 # Ignore all generated DLLs
 *.dll
 
@@ -22,7 +15,6 @@ GameData/KSCSwitcher/PluginData/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-*ns.md
 
 # Build results
 [Dd]ebug/
