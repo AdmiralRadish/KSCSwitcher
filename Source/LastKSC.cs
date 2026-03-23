@@ -59,18 +59,26 @@ namespace regexKSP
                 if (instance == null)
                 {
                     Game g = HighLogic.CurrentGame;
-                    instance = g.scenarios.Select(s => s.moduleRef).OfType<LastKSC>().SingleOrDefault();
+                    instance = g.scenarios.Select(s => s.moduleRef).OfType<LastKSC>().FirstOrDefault();
                 }
                 return instance;
             }
         }
 
+        private void OnDestroy()
+        {
+            if (instance == this)
+                instance = null;
+        }
+
         public override void OnLoad(ConfigNode config)
         {
             // Preserve all values so other LMP players' data survives the save cycle.
+            // Skip KSP metadata keys — the framework writes these itself on save.
             _allValues.Clear();
             foreach (ConfigNode.Value v in config.values)
-                _allValues[v.name] = v.value;
+                if (v.name != "name" && v.name != "scene")
+                    _allValues[v.name] = v.value;
 
             string key = GetSiteKey();
             if (config.HasValue(key))
