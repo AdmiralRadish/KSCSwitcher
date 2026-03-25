@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -38,63 +38,49 @@
     <DebugSymbols>true</DebugSymbols>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
-  <!-- Set KSPDir in your .csproj.user file to your KSP install folder -->
-  <Target Name="ValidateKSPDir" BeforeTargets="ResolveAssemblyReferences">
-    <Error Condition="'$(KSPDir)' == ''" Text="KSPDir is not set. Set KSPDir in your .csproj.user file to your KSP install path." />
-    <Error Condition="!Exists('$(KSPDir)\KSP_x64_Data\Managed')" Text="KSP managed directory not found at '$(KSPDir)\KSP_x64_Data\Managed'. Verify your KSPDir path." />
-  </Target>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/Assembly-CSharp.dll">
+      <HintPath>$(ReferencePath)/Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/System.dll">
+      <HintPath>$(ReferencePath)/System.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/System.Core.dll">
+      <HintPath>$(ReferencePath)/System.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/UnityEngine.dll">
+      <HintPath>$(ReferencePath)/UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/UnityEngine.CoreModule.dll">
+      <HintPath>$(ReferencePath)/UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/UnityEngine.ImageConversionModule.dll">
+      <HintPath>$(ReferencePath)/UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/UnityEngine.IMGUIModule.dll">
+      <HintPath>$(ReferencePath)/UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\System.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.Core">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\System.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.Xml">
-      <HintPath>$(KSPDir)\KSP_x64_Data\Managed\System.Xml.dll</HintPath>
+    <Reference Include="$(KSPRoot)/KSP_x64_Data/Managed/UnityEngine.TextRenderingModule.dll">
+      <HintPath>$(ReferencePath)/UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CameraFixer.cs" />
     <Compile Include="GrassSeasoner.cs" />
     <Compile Include="KSCLoader.cs" />
-    <Compile Include="KSCLunaHelper.cs" />
-    <Compile Include="KSCSiteManager.cs" />
-    <Compile Include="KSCSwitcher.cs" />
-    <Compile Include="LastKSC.cs" />
-    <Compile Include="LaunchSite.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="KSCSwitcher.cs" />
+    <Compile Include="CameraFixer.cs" />
+    <Compile Include="KSCSiteManager.cs" />
+    <Compile Include="LaunchSite.cs" />
+    <Compile Include="LastKSC.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
