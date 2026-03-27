@@ -84,8 +84,11 @@ namespace regexKSP
         }
 
         /// <summary>
-        /// True when LMP is loaded AND the client is connected to a server
-        /// (NetworkState >= Running, i.e. enum value 36).
+        /// True when LMP is loaded AND the client is connected to a server.
+        /// Threshold is Starting (35) rather than Running (36) because OnLoad
+        /// fires during Game.Start() — before the first Update() promotes
+        /// the state to Running.  At Starting the scenario data has already
+        /// been synced from the server, so the per-install key is correct.
         /// </summary>
         private static bool IsLmpConnected
         {
@@ -93,7 +96,7 @@ namespace regexKSP
             {
                 if (!IsLmpLoaded || _networkStateProp == null) return false;
                 int state = (int)_networkStateProp.GetValue(null, null);
-                return state >= 36; // ClientState.Running
+                return state >= 35; // ClientState.Starting — scenarios already synced
             }
         }
 
@@ -103,7 +106,7 @@ namespace regexKSP
         /// so scenario sync won't clobber another player's preference.
         /// Singleplayer or LMP not connected: "SinglePlayer_LastLaunchSite" — portable across machines.
         /// </summary>
-        private static string GetSiteKey()
+        internal static string GetSiteKey()
         {
             return IsLmpConnected
                 ? InstallId + "_LastLaunchSite"
@@ -129,8 +132,11 @@ namespace regexKSP
                 instance = null;
         }
 
+        private bool _onLoadCalled = false;
+
         public override void OnLoad(ConfigNode config)
         {
+            _onLoadCalled = true;
             // Preserve all values so other installs' data survives the save cycle.
             // Skip KSP metadata keys — the framework writes these itself on save.
             _allValues.Clear();
@@ -143,13 +149,43 @@ namespace regexKSP
                 lastSite = config.GetValue(key);
             else if (config.HasValue("LastLaunchSite"))
                 lastSite = config.GetValue("LastLaunchSite"); // migrate from legacy single key
+            else
+            {
+                // Fallback: pick any *_LastLaunchSite value (covers timing edge
+                // cases where IsLmpConnected returns the wrong answer during load).
+                foreach (var kvp in _allValues)
+                {
+                    if (kvp.Key.EndsWith("_LastLaunchSite") && !string.IsNullOrEmpty(kvp.Value))
+                    {
+                        lastSite = kvp.Value;
+                        break;
+                    }
+                }
+            }
 
             if (!string.IsNullOrEmpty(lastSite))
-                KSCLoader.instance.Sites.lastSite = lastSite;
+            {
+                // Only update Sites.lastSite if it's empty or matches what we read.
+                // When LMP is connected and OnGameStateCreated already set the correct
+                // site, a stale duplicate PSM's OnLoad must not clobber it.
+                string current = KSCLoader.instance.Sites.lastSite;
+                if (string.IsNullOrEmpty(current) || current == lastSite)
+                    KSCLoader.instance.Sites.lastSite = lastSite;
+                else
+                    Debug.Log("[KSCSwitcher] OnLoad skipped Sites.lastSite update (current=" + current + ", loaded=" + lastSite + ")");
+            }
         }
 
         public override void OnSave(ConfigNode config)
         {
+            // If OnLoad() was never called (e.g. scene mismatch), don't write
+            // empty data that would overwrite the server's good data.
+            if (!_onLoadCalled)
+            {
+                Debug.Log("[KSCSwitcher] LastKSC.OnSave() skipped — OnLoad was never called");
+                return;
+            }
+
             string key = GetSiteKey();
             _allValues[key] = lastSite;
 
@@ -159,10 +195,29 @@ namespace regexKSP
 
         public static void CreateSettings(Game game)
         {
-            if (!game.scenarios.Any(p => p.moduleName == typeof(LastKSC).Name))
+            // Deduplicate: LMP's Game.Start() can reload from disk and create a second
+            // LastKSC PSM alongside the original server-synced one. The stale duplicate
+            // causes OnLoad() to overwrite Sites.lastSite with old data.
+            var allLastKSC = game.scenarios.Where(p => p.moduleName == typeof(LastKSC).Name).ToList();
+            if (allLastKSC.Count > 1)
             {
-                ProtoScenarioModule proto = game.AddProtoScenarioModule(typeof(LastKSC), GameScenes.TRACKSTATION);
+                // Keep the first (server-authoritative) PSM, remove the rest.
+                for (int i = 1; i < allLastKSC.Count; i++)
+                    game.scenarios.Remove(allLastKSC[i]);
+                Debug.Log("[KSCSwitcher] removed " + (allLastKSC.Count - 1) + " duplicate LastKSC PSM(s)");
+            }
+
+            var existing = game.scenarios.FirstOrDefault(p => p.moduleName == typeof(LastKSC).Name);
+            if (existing == null)
+            {
+                ProtoScenarioModule proto = game.AddProtoScenarioModule(typeof(LastKSC), GameScenes.TRACKSTATION, GameScenes.SPACECENTER);
                 proto.Load(ScenarioRunner.Instance);
+            }
+            else if (!existing.targetScenes.Contains(GameScenes.SPACECENTER))
+            {
+                // Server/save may store scene=8 (TRACKSTATION only). Add SPACECENTER so
+                // ProtoScenarioModule.Load() won't skip OnLoad during SpaceCenter load.
+                existing.targetScenes.Add(GameScenes.SPACECENTER);
             }
         }
     }
