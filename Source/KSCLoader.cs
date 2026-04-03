@@ -166,7 +166,6 @@ namespace regexKSP
                 }
             }
 
-            Debug.Log("[KSCSwitcher] no site key found in PSM data (" + bestData.values.Count + " values)");
             return null;
         }
 

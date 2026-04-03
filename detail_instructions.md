@@ -63,7 +63,9 @@ ScenarioModule that persists the last-selected launch site per-install.
 
 **`OnSave(ConfigNode)`** — Writes `_allValues` + current site. Skipped if `_onLoadCalled` is false (prevents empty data overwriting server).
 
-**`CreateSettings(Game)`** — Deduplicates LastKSC PSMs (LMP creates duplicates); adds SPACECENTER to targetScenes.
+**`CreateSettings(Game)`** — Deduplicates LastKSC PSMs (LMP creates duplicates); picks PSM with best data via `ScorePsm()`; adds SPACECENTER to targetScenes.
+
+**`ScorePsm(ProtoScenarioModule)`** — Peeks at a PSM's ConfigNode via reflection and returns a score: +1000 if any `*_LastLaunchSite` key exists, plus the raw value count. Used by `CreateSettings()` to pick the PSM with actual site data during deduplication.
 
 ### KSCSwitcher.cs
 MonoBehaviour for the tracking station UI. `SetSite()` updates both `KSCLoader.instance.Sites.lastSite` and `LastKSC.fetch.lastSite`.
@@ -86,7 +88,7 @@ MonoBehaviour for the tracking station UI. `SetSite()` updates both `KSCLoader.i
 
 3. **PSM has no site key on reconnect** — The 30-second sync interval means site changes within the last 30s before disconnect are lost. **Fixed**: in-memory fallback uses `Sites.lastSite` which persists in the static `KSCLoader.instance` across reconnects. Self-healing: on next 30s sync after reconnect, the correct key is written and sent to server.
 
-4. **Duplicate PSMs** — LMP's `Game.Start()` can reload from disk and create duplicates. **Fixed**: `CreateSettings()` deduplicates on every game creation.
+4. **Duplicate PSMs — wrong one kept** — LMP adds server PSMs first via `scenarios.Add()`, then KSP may add a disk PSM from persistent.sfs. Old code kept index 0 blindly (stale/empty disk PSM) and discarded index 1+ (server PSM with site keys). **Fixed**: `CreateSettings()` now scores each PSM via `ScorePsm()` — +1000 for having a `*_LastLaunchSite` key, plus raw value count — and keeps the highest-scoring one. This also prevented a destructive cascade where the empty PSM's `OnSave()` would overwrite server data with just the default site, wiping all other players' keys.
 
 5. **Scene mismatch** — Server stores `scene=8` (TRACKSTATION only). **Fixed**: `CreateSettings()` adds SPACECENTER to targetScenes at runtime.
 
@@ -110,3 +112,5 @@ First 8 chars of `SystemInfo.deviceUniqueIdentifier`. Each machine gets a unique
 | Various | LMP-compatible per-install site keys, PSM deduplication, scene-gating bypass | `KSCLoader.cs`, `LastKSC.cs` |
 | 2026-03-27 | Added in-memory fallback: `Sites.lastSite` reused when PSM lacks site key on reconnect | `KSCLoader.cs` |
 | 2026-03-27 | Fixed LMP `DisconnectFromGame`: send scenarios BEFORE disconnecting | `LunaMultiplayerRSS-source/LmpClient/MainSystem.cs` |
+| 2026-03-29 | Fixed PSM dedup: keep PSM with best data (site keys) instead of index 0. Prevents cascade where empty PSM overwrites server data on next sync. Added `ScorePsm()` helper. | `LastKSC.cs` |
+| 2026-03-31 | Removed noisy "no site key found in PSM data" log from `ReadSiteFromPsm()`. This was a benign fallback path when PSM has non-site values — caller already logs its own message ("PSM had no site key; using cached lastSite=…"). | `KSCLoader.cs` |

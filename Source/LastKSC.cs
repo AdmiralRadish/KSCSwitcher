@@ -113,6 +113,35 @@ namespace regexKSP
                 : "SinglePlayer_LastLaunchSite";
         }
 
+        /// <summary>
+        /// Scores a PSM by peeking at its ConfigNode via reflection.
+        /// +1000 if a *_LastLaunchSite key exists, plus raw value count.
+        /// </summary>
+        private static int ScorePsm(ProtoScenarioModule psm)
+        {
+            var flags = System.Reflection.BindingFlags.Instance
+                      | System.Reflection.BindingFlags.Public
+                      | System.Reflection.BindingFlags.NonPublic;
+            int bestScore = 0;
+            foreach (var field in psm.GetType().GetFields(flags))
+            {
+                if (field.FieldType != typeof(ConfigNode)) continue;
+                var cn = field.GetValue(psm) as ConfigNode;
+                if (cn == null) continue;
+                int score = cn.values.Count;
+                foreach (ConfigNode.Value v in cn.values)
+                {
+                    if (v.name.EndsWith("_LastLaunchSite") && !string.IsNullOrEmpty(v.value))
+                    {
+                        score += 1000;
+                        break;
+                    }
+                }
+                if (score > bestScore) bestScore = score;
+            }
+            return bestScore;
+        }
+
         public static LastKSC fetch
         {
             get
@@ -174,6 +203,13 @@ namespace regexKSP
                 else
                     Debug.Log("[KSCSwitcher] OnLoad skipped Sites.lastSite update (current=" + current + ", loaded=" + lastSite + ")");
             }
+            else if (KSCLoader.instance != null && !string.IsNullOrEmpty(KSCLoader.instance.Sites.lastSite))
+            {
+                // ScenarioRunner recreated this module during a scene transition
+                // and the PSM data had no key. Recover from the cached site.
+                lastSite = KSCLoader.instance.Sites.lastSite;
+                Debug.Log("[KSCSwitcher] OnLoad recovered lastSite from cache: " + lastSite);
+            }
         }
 
         public override void OnSave(ConfigNode config)
@@ -186,6 +222,16 @@ namespace regexKSP
                 return;
             }
 
+            // ScenarioRunner recreates module instances on scene transitions.
+            // The new instance's OnLoad may find no key in the PSM data, leaving
+            // lastSite empty. Fall back to the cached site so we never write an
+            // empty value that would mask the key on the next load.
+            if (string.IsNullOrEmpty(lastSite) && KSCLoader.instance != null
+                && !string.IsNullOrEmpty(KSCLoader.instance.Sites.lastSite))
+            {
+                lastSite = KSCLoader.instance.Sites.lastSite;
+            }
+
             string key = GetSiteKey();
             _allValues[key] = lastSite;
 
@@ -195,16 +241,27 @@ namespace regexKSP
 
         public static void CreateSettings(Game game)
         {
-            // Deduplicate: LMP's Game.Start() can reload from disk and create a second
-            // LastKSC PSM alongside the original server-synced one. The stale duplicate
-            // causes OnLoad() to overwrite Sites.lastSite with old data.
+            // Deduplicate: LMP adds server PSMs first, then KSP may add a disk PSM
+            // from persistent.sfs. Either copy may have the actual site keys.
+            // Pick the PSM with the best data instead of blindly keeping index 0.
             var allLastKSC = game.scenarios.Where(p => p.moduleName == typeof(LastKSC).Name).ToList();
             if (allLastKSC.Count > 1)
             {
-                // Keep the first (server-authoritative) PSM, remove the rest.
+                ProtoScenarioModule best = allLastKSC[0];
+                int bestScore = ScorePsm(best);
                 for (int i = 1; i < allLastKSC.Count; i++)
-                    game.scenarios.Remove(allLastKSC[i]);
-                Debug.Log("[KSCSwitcher] removed " + (allLastKSC.Count - 1) + " duplicate LastKSC PSM(s)");
+                {
+                    int score = ScorePsm(allLastKSC[i]);
+                    if (score > bestScore)
+                    {
+                        best = allLastKSC[i];
+                        bestScore = score;
+                    }
+                }
+                foreach (var p in allLastKSC)
+                    if (p != best) game.scenarios.Remove(p);
+                Debug.Log("[KSCSwitcher] removed " + (allLastKSC.Count - 1)
+                    + " duplicate LastKSC PSM(s), kept PSM with score " + bestScore);
             }
 
             var existing = game.scenarios.FirstOrDefault(p => p.moduleName == typeof(LastKSC).Name);
